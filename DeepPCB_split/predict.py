@@ -71,7 +71,7 @@ val_dataset = dataset.skip(split_index)
 IMG_SIZE = 224  # 이미지 크기
 NUM_CLASSES = 2  # 정상(0), 불량(1)
 
-#모델 학습습
+#모델 학습
 model = models.Sequential([
     layers.InputLayer(input_shape=(IMG_SIZE, IMG_SIZE, 3)),
     
