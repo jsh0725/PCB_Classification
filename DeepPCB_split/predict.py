@@ -3,22 +3,28 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import layers, models
 
-############################################################################# 학습용 데이터셋 준비
+################################################################################ 학습용 데이터셋 준비
 
-csv_path = './DeepPCB_split/trainval_label.csv'
-df = pd.read_csv(csv_path)
+train_csv = './DeepPCB_split/trainval_label.csv'
+df = pd.read_csv(train_csv)
+train_image_dir = './DeepPCB_split/train'
 
-# Defects 컬럼이 0이면 정상(0), 1 이상이면 불량(1)
-df['label'] = df['Defects'].apply(lambda x: 0 if x == 0 else 1)
+#filepath -> csv 파일의 filename 열에 저장되어 있는 이미지 이름과 동일한 이미지의 실제 경로(폴더)를 filepath에 저장
+df['filepath'] = df['filename'].apply(lambda x: os.path.join(train_image_dir, x))
+'''
+| filename  | filepath                  |
+| --------- | ------------------------- |
+| file1.jpg | ./train\_images/file1.jpg |
+| file2.jpg | ./train\_images/file2.jpg |
+| file3.jpg | ./train\_images/file3.jpg |
+'''
 
-image_dir = './DeepPCB_split/train'
-
-df['filepath'] = df['filename'].apply(lambda x: os.path.join(image_dir, x))
-
+#labels: 정상(0), 불량(1) 이미지를 판단하기 위한 라벨링은 csv 파일의 두번째 열인 Defects 이용
+#model 학습에 사용하기 위해 각각의 열을 list화
 filepaths = df['filepath'].tolist()
-labels = df['label'].tolist()
+labels = df['Defects'].tolist()
 
-IMG_SIZE = 224  # 원하는 이미지 크기
+IMG_SIZE = 224  # CNN에서 보통통 사용하는 표준 크기
 
 def decode_img(img_path, label):
     # 이미지 읽기
@@ -30,6 +36,7 @@ def decode_img(img_path, label):
     # 픽셀값 0~1 정규화
     img = img / 255.0
     return img, label
+
 BATCH_SIZE = 32
 
 dataset = tf.data.Dataset.from_tensor_slices((filepaths, labels))
@@ -37,21 +44,14 @@ dataset = dataset.map(decode_img, num_parallel_calls=tf.data.AUTOTUNE)
 dataset = dataset.shuffle(buffer_size=1000).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
 ################################################################################## 테스트용 데이터셋 준비
-# test CSV 경로 (trainval_label.csv와 다르다면 따로 지정)
 test_csv_path = './DeepPCB_split/test_label.csv'  # 예시
-
-# CSV 불러오기
 test_df = pd.read_csv(test_csv_path)
-
-# 라벨링 (train과 동일하게)
-test_df['label'] = test_df['Defects'].apply(lambda x: 0 if x == 0 else 1)
-
-# 이미지 경로 생성
 test_dir = './DeepPCB_split/test'
+
 test_df['filepath'] = test_df['filename'].apply(lambda x: os.path.join(test_dir, x))
 
 test_filepaths = test_df['filepath'].tolist()
-test_labels = test_df['label'].tolist()
+test_labels = test_df['Defects'].tolist()
 
 def make_dataset(files, labels, shuffle=False, batch_size=32):
     ds = tf.data.Dataset.from_tensor_slices((files, labels))
@@ -61,8 +61,8 @@ def make_dataset(files, labels, shuffle=False, batch_size=32):
 
 test_dataset = make_dataset(test_filepaths, test_labels, shuffle=False, batch_size=32)
 
-#################################################################################CNN 모델 정의 
-# 예를 들어 80% 학습, 20% 검증 분할
+################################################################################# CNN 모델 구축
+#80% 학습, 20% 검증 분할
 split_index = int(len(filepaths) * 0.8)
 
 train_dataset = dataset.take(split_index)
@@ -71,7 +71,7 @@ val_dataset = dataset.skip(split_index)
 IMG_SIZE = 224  # 이미지 크기
 NUM_CLASSES = 2  # 정상(0), 불량(1)
 
-#모델 학습
+#모델 정의
 model = models.Sequential([
     layers.InputLayer(input_shape=(IMG_SIZE, IMG_SIZE, 3)),
     
@@ -99,12 +99,11 @@ model.compile(optimizer='adam',
               loss='sparse_categorical_crossentropy',
               metrics=['accuracy'])
 
-EPOCHS = 10
-
+#모델 학습
 history = model.fit(train_dataset,
                     validation_data=val_dataset,
-                    epochs=EPOCHS)
-
+                    epochs=15)
+#평가
 test_loss, test_acc = model.evaluate(test_dataset)
 print(f"Test Loss: {test_loss:.4f}")
 print(f"Test Accuracy: {test_acc:.4f}")
