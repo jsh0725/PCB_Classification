@@ -10,10 +10,11 @@ def plot_mdhistory(hist, model_name):
     plt.plot(hist['val_accuracy'], label = f'{model_name} Val')
 
 plt.figure(figsize=(10, 6))
-for i in range(1, 4):
+for i in range(1, 6):
     filepath = os.path.join("DeepPCB_split", "Model results", f"model{i}_history.json")
     history = load_mdhistory(filepath)
     plot_mdhistory(history, f'Model {i}')
+
 
 plt.title('Accuracy Comparison (Train vs Val)')
 plt.xlabel('Epoch')
