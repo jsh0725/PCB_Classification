@@ -192,14 +192,21 @@ history_3 = model_3.fit(train_dataset,
                     epochs = EPOCH)
 
 #model_4 -> residual connections를 추가하여 정보 손실을 방지하는 모델
+# 몇 개의 층을 건너뛰는 연결(shortcut = layers.Conv2D(filters, (1, 1), padding="same")(x)을 하나 만들어
+# 다음 층들의 채널 수(filter)와 맞춰주어 덧셈연산이 가능하게 함
+# 모델의 층이 깊어질 수록 정보가 소실되는 문제(기울기 소실, 과적합 등..)가 발생 할 수 있기에
+# ADD 연산을 통해 입력이 그대로 다음 층으로 전달되고 층을 추가해도 성능이 나빠지지 않게 할 수 있음
 def residual_block(x, filters):
+    # shortcut 경로 : 입력 x 의 채널 수를 filters와 동일하게 맞춤
     shortcut = layers.Conv2D(filters, (1, 1), padding="same")(x)  # 크기 맞추기 
 
+    # 주 경로 : 3x3 컨볼루션 두 번
     x = layers.Conv2D(filters, (3, 3), padding='same', activation='relu')(x)
     x = layers.BatchNormalization()(x)
     x = layers.Conv2D(filters, (3, 3), padding='same')(x)
     x = layers.BatchNormalization()(x)
 
+    # shortcut과 주 경로를 더함
     x = layers.Add()([x, shortcut])  # 동일한 크기로 유지 
     x = layers.ReLU()(x)
 
@@ -221,7 +228,7 @@ x = layers.MaxPooling2D()(x)
 
 x = layers.Flatten()(x)
 x = layers.Dense(256, activation='relu')(x)
-x = layers.Dropout(0.5)(x)
+x = layers.Dropout(0.6)(x)  # 드롭아웃 수치 (0.5 -> 0.6)
 output_layer = layers.Dense(2, activation='softmax')(x)
 
 model_4 = models.Model(inputs=input_layer, outputs=output_layer)
