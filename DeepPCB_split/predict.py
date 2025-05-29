@@ -91,7 +91,6 @@ test_dataset = test_dataset.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 ################################################################################# CNN 모델 구축
 
 EPOCH = 20
-IMG_SIZE = 224  # 이미지 크기
 
 #모델 정의(1~5번)
 #binary classification은 이진 분류, 즉 단 하나의 선택만 필요하므로 softmax 보다 sigmoid가 더 적절하다.
@@ -303,7 +302,7 @@ test_loss5, test_acc5 = model_5.evaluate(test_dataset)
 test_accs = [test_acc1, test_acc2, test_acc3, test_acc4, test_acc5]
 model_names = ["Model 1", "Model 2", "Model 3", "Model 4", "Model 5"]
 
-#평가 결과 시각화화(Graph)
+#평가 결과 시각화(Graph)
 for i, acc in enumerate(test_accs):
     plt.text(i, acc + 0.02, f"{acc:.2f}", ha='center')
 
