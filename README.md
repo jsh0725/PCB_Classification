@@ -25,4 +25,3 @@
 - Defect type detection and localization with bounding boxes
 - Custom dataset preprocessing based on DeepPCB
 - LabelMe-based annotation and mask generation
->>>>>>> clean_branch_2
