@@ -1,0 +1,10 @@
+# 모델 파일 무시
+*.h5
+*.hdf5
+
+# Jupyter 체크포인트 파일 무시
+*.ipynb_checkpoints
+
+# 파이썬 캐시 무시
+__pycache__/
+*.pyc
